@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Buyer Assistant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .tab-btn {
+      background: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .tab-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .tab-btn.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      width: 100%;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .results {
+      margin-top: 30px;
+    }
+
+    .result-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .result-section h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+
+    .result-item {
+      margin-bottom: 15px;
+      padding: 12px;
+      background: white;
+      border-radius: 6px;
+    }
+
+    .result-item strong {
+      color: #333;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .result-item p {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      line-height: 1.8;
+      color: #555;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #667eea;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error {
+      background: #fee;
+      color: #c33;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #c33;
+      margin-top: 20px;
+    }
+
+    .success {
+      background: #efe;
+      color: #3c3;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #3c3;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.8em;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .tabs {
+        flex-direction: column;
+      }
+
+      .tab-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🚗 Car Buyer Assistant</h1>
+      <p class="subtitle">Research, Evaluate, and Negotiate with Confidence</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('research')">Research</button>
+      <button class="tab-btn" onclick="switchTab('testDrive')">Test Drive Guide</button>
+      <button class="tab-btn" onclick="switchTab('negotiation')">Price Negotiation</button>
+    </div>
+
+    <!-- Research Tab -->
+    <div id="research" class="tab-content active">
+      <h2>Research a Car</h2>
+      
+      <div id="researchInput">
+        <div class="form-group">
+          <label>Search Method</label>
+          <select id="searchMethod" onchange="toggleSearchMethod()">
+            <option value="details">By Make, Model, Year</option>
+            <option value="vin">By VIN</option>
+          </select>
+        </div>
+
+        <div id="detailsSearch">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="make">Make</label>
+              <input type="text" id="make" placeholder="e.g., Toyota, Honda, Ford">
+            </div>
+            <div class="form-group">
+              <label for="model">Model</label>
+              <input type="text" id="model" placeholder="e.g., Camry, Civic">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="year">Year</label>
+              <input type="number" id="year" placeholder="e.g., 2023" min="1900" max="2099">
+            </div>
+            <div class="form-group">
+              <label for="mileage">Mileage</label>
+              <input type="number" id="mileage" placeholder="e.g., 45000" min="0">
+            </div>
+          </div>
+        </div>
+
+        <div id="vinSearch" style="display:none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="vin">VIN (17 characters)</label>
+              <input type="text" id="vin" placeholder="e.g., WBADT43452G297186" maxlength="17">
+            </div>
+            <div class="form-group">
+              <label for="vinMileage">Mileage</label>
+              <input type="number" id="vinMileage" placeholder="e.g., 45000" min="0">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-submit" onclick="researchCar()">Research Car</button>
+      </div>
+
+      <div id="researchResults" class="results"></div>
+    </div>
+
+    <!-- Test Drive Tab -->
+    <div id="testDrive" class="tab-content">
+      <h2>Test Drive Guide</h2>
+      
+      <div id="testDriveInput">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tdMake">Make</label>
+            <input type="text" id="tdMake" placeholder="e.g., Toyota">
+          </div>
+          <div class="form-group">
+            <label for="tdModel">Model</label>
+            <input type="text" id="tdModel" placeholder="e.g., Camry">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="tdYear">Year</label>
+          <input type="number" id="tdYear" placeholder="e.g., 2023" min="1900" max="2099">
+        </div>
+        <button class="btn-submit" onclick="getTestDriveGuide()">Get Test Drive Guide</button>
+      </div>
+
+      <div id="testDriveResults" class="results"></div>
+    </div>
+
+    <!-- Negotiation Tab -->
+    <div id="negotiation" class="tab-content">
+      <h2>Price Negotiation Strategy</h2>
+      
+      <div id="negotiationInput">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="negMake">Make</label>
+            <input type="text" id="negMake" placeholder="e.g., Toyota">
+          </div>
+          <div class="form-group">
+            <label for="negModel">Model</label>
+            <input type="text" id="negModel" placeholder="e.g., Camry">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="negYear">Year</label>
+            <input type="number" id="negYear" placeholder="e.g., 2023" min="1900" max="2099">
+          </div>
+          <div class="form-group">
+            <label for="negMileage">Mileage</label>
+            <input type="number" id="negMileage" placeholder="e.g., 45000" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="sellingPrice">Asking Price ($)</label>
+          <input type="number" id="sellingPrice" placeholder="e.g., 28500" min="0" step="100">
+        </div>
+        <button class="btn-submit" onclick="getNegotiationStrategy()">Get Strategy</button>
+      </div>
+
+      <div id="negotiationResults" class="results"></div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Show selected tab
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function toggleSearchMethod() {
+      const method = document.getElementById('searchMethod').value;
+      document.getElementById('detailsSearch').style.display = method === 'details' ? 'block' : 'none';
+      document.getElementById('vinSearch').style.display = method === 'vin' ? 'block' : 'none';
+    }
+
+    async function researchCar() {
+      const method = document.getElementById('searchMethod').value;
+      const resultsDiv = document.getElementById('researchResults');
+
+      try {
+        resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Researching car...</div>';
+
+        let data = {};
+        let endpoint = '';
+
+        if (method === 'details') {
+          const make = document.getElementById('make').value;
+          const model = document.getElementById('model').value;
+          const year = document.getElementById('year').value;
+          const mileage = document.getElementById('mileage').value;
+
+          if (!make || !model || !year || !mileage) {
+            throw new Error('Please fill in all fields');
+          }
+
+          data = { make, model, year: parseInt(year), mileage: parseInt(mileage) };
+          endpoint = '/api/research/by-details';
+        } else {
+          const vin = document.getElementById('vin').value;
+          const mileage = document.getElementById('vinMileage').value;
+
+          if (!vin || !mileage) {
+            throw new Error('Please fill in all fields');
+          }
+
+          data = { vin: vin.toUpperCase(), mileage: parseInt(mileage) };
+          endpoint = '/api/research/by-vin';
+        }
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Research failed');
+        }
+
+        const result = await response.json();
+        displayResearchResults(result, resultsDiv);
+      } catch (error) {
+        resultsDiv.innerHTML = `<div class="error">${error.message}</div>`;
+      }
+    }
+
+    function formatValue(value) {
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number') return value;
+      if (Array.isArray(value)) {
+        // Handle arrays of objects
+        return value.map(item => {
+          if (typeof item === 'object' && item !== null) {
+            return Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(', ');
+          }
+          return String(item);
+        }).join('; ');
+      }
+      if (typeof value === 'object' && value !== null) return JSON.stringify(value);
+      return String(value);
+    }
+
+    function formatCurrency(value) {
+      if (!value) return 'N/A';
+      if (typeof value === 'number') {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(value);
+      }
+      // If it's a string that looks like a price range or currency, return as-is
+      return String(value);
+    }
+
+    function formatObjectAsText(obj) {
+      if (!obj) return 'Information not available';
+      if (typeof obj === 'string') return obj;
+      if (typeof obj === 'number') return obj;
+      if (Array.isArray(obj)) {
+        // If it's an array of strings/numbers, join them nicely
+        if (obj.every(item => typeof item === 'string' || typeof item === 'number')) {
+          return obj.join('; ');
+        }
+        // If array of objects, format each one
+        return obj.map(item => {
+          if (typeof item === 'object') return Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(', ');
+          return String(item);
+        }).join('; ');
+      }
+      if (typeof obj === 'object') {
+        // Convert object to readable key-value format, formatting currency fields
+        return Object.entries(obj)
+          .map(([key, val]) => {
+            // If value is an object or array, format it recursively
+            if (typeof val === 'object') {
+              return `${key}: ${formatObjectAsText(val)}`;
+            }
+            // Format values that look like prices or costs as currency (only if they're numbers)
+            if (typeof val === 'number' && (key.toLowerCase().includes('price') || key.toLowerCase().includes('cost') || key.toLowerCase().includes('value'))) {
+              return `${key}: ${formatCurrency(val)}`;
+            }
+            return `${key}: ${val}`;
+          })
+          .join('; ');
+      }
+      return String(obj);
+    }
+
+    function displayResearchResults(result, container) {
+      let html = `
+        <div class="result-section">
+          <h3>Vehicle Info</h3>
+          <div class="result-item">
+            <strong>${result.vehicle.make} ${result.vehicle.model} ${result.vehicle.year}</strong>
+            <p>Mileage: ${result.vehicle.mileage.toLocaleString()} miles</p>
+            ${result.vehicle.vin ? `<p>VIN: ${result.vehicle.vin}</p>` : ''}
+          </div>
+        </div>
+      `;
+
+      if (result.reliability) {
+        html += `
+          <div class="result-section">
+            <h3>Reliability & Ratings</h3>
+            <div class="result-item">
+              <strong>Reliability Rating:</strong>
+              <p>${formatObjectAsText(result.reliability)}</p>
+            </div>
+            <div class="result-item">
+              <strong>Safety Rating:</strong>
+              <p>${result.safetyRating ? formatObjectAsText(result.safetyRating) : 'Information not available'}</p>
+            </div>
+            <div class="result-item">
+              <strong>Fuel Economy:</strong>
+              <p>${result.fuelEconomy ? formatObjectAsText(result.fuelEconomy) : 'Information not available'}</p>
+            </div>
+          </div>
+        `;
+      }
+
+      if (result.commonIssues && result.commonIssues.length > 0) {
+        html += `
+          <div class="result-section">
+            <h3>Common Issues to Watch For</h3>
+            <ul>
+              ${result.commonIssues.map(issue => `<li>${formatValue(issue)}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      if (result.averagePrice) {
+        html += `
+          <div class="result-section">
+            <h3>Pricing & Value</h3>
+            <div class="result-item">
+              <strong>Average Price Range:</strong>
+              <p>${formatObjectAsText(result.averagePrice)}</p>
+            </div>
+            <div class="result-item">
+              <strong>Maintenance Costs:</strong>
+              <p>${result.maintenanceCosts ? formatObjectAsText(result.maintenanceCosts) : 'Information not available'}</p>
+            </div>
+            <div class="result-item">
+              <strong>Resale Value:</strong>
+              <p>${result.resaleValue ? formatObjectAsText(result.resaleValue) : 'Information not available'}</p>
+            </div>
+          </div>
+        `;
+      }
+
+      if (result.keyFeatures && result.keyFeatures.length > 0) {
+        html += `
+          <div class="result-section">
+            <h3>Key Features</h3>
+            <ul>
+              ${result.keyFeatures.map(feature => `<li>${formatValue(feature)}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    async function getTestDriveGuide() {
+      const make = document.getElementById('tdMake').value;
+      const model = document.getElementById('tdModel').value;
+      const year = document.getElementById('tdYear').value;
+      const resultsDiv = document.getElementById('testDriveResults');
+
+      if (!make || !model || !year) {
+        resultsDiv.innerHTML = '<div class="error">Please fill in all fields</div>';
+        return;
+      }
+
+      try {
+        resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Generating test drive guide...</div>';
+
+        const response = await fetch(`/api/test-drive/checklist?make=${make}&model=${model}&year=${year}`);
+        if (!response.ok) throw new Error('Failed to get guide');
+
+        const result = await response.json();
+        let html = `
+          <div class="result-section">
+            <h3>Pre-Test Drive Checks</h3>
+            <ul>
+              ${(result.preTestDriveChecks || []).map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="result-section">
+            <h3>Exterior Inspection</h3>
+            <ul>
+              ${(result.exteriorInspection || []).map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="result-section">
+            <h3>Interior Inspection</h3>
+            <ul>
+              ${(result.interiorInspection || []).map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="result-section">
+            <h3>Engine Compartment</h3>
+            <ul>
+              ${(result.engineCompartment || []).map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="result-section">
+            <h3>Test Drive Points</h3>
+            <ul>
+              ${(result.testDrivePoints || []).map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="result-section">
+            <h3>Red Flags</h3>
+            <ul>
+              ${(result.redFlags || []).map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          ${result.modelSpecificConcerns && result.modelSpecificConcerns.length > 0 ? `
+            <div class="result-section">
+              <h3>Model-Specific Concerns</h3>
+              <ul>
+                ${result.modelSpecificConcerns.map(item => `<li>${item}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        `;
+        resultsDiv.innerHTML = html;
+      } catch (error) {
+        resultsDiv.innerHTML = `<div class="error">${error.message}</div>`;
+      }
+    }
+
+    async function getNegotiationStrategy() {
+      const make = document.getElementById('negMake').value;
+      const model = document.getElementById('negModel').value;
+      const year = document.getElementById('negYear').value;
+      const mileage = document.getElementById('negMileage').value;
+      const sellingPrice = document.getElementById('sellingPrice').value;
+      const resultsDiv = document.getElementById('negotiationResults');
+
+      if (!make || !model || !year || !mileage || !sellingPrice) {
+        resultsDiv.innerHTML = '<div class="error">Please fill in all fields</div>';
+        return;
+      }
+
+      try {
+        resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing pricing strategy...</div>';
+
+        const response = await fetch('/api/negotiation/strategy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            make, model, year: parseInt(year), mileage: parseInt(mileage), sellingPrice: parseInt(sellingPrice)
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to get strategy');
+
+        const result = await response.json();
+        let html = `
+          <div class="result-section">
+            <h3>Market Analysis</h3>
+            <p>${result.marketAnalysis}</p>
+          </div>
+
+          <div class="result-section">
+            <h3>Fair Price Range</h3>
+            <p>${result.fairPriceRange}</p>
+          </div>
+
+          <div class="result-section">
+            <h3>Recommended Offer</h3>
+            <div class="result-item">
+              <strong>Suggested Opening Offer:</strong>
+              <p>$${result.suggestedOpeningOffer?.toLocaleString() || 'N/A'}</p>
+            </div>
+            <div class="result-item">
+              <strong>Walk Away Price:</strong>
+              <p>$${result.walkawayprice?.toLocaleString() || 'N/A'}</p>
+            </div>
+          </div>
+
+          <div class="result-section">
+            <h3>Negotiation Points</h3>
+            <ul>
+              ${(result.negotiationPoints || []).map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="result-section">
+            <h3>Negotiation Tips</h3>
+            <ul>
+              ${(result.negotiationTips || []).map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+
+          ${result.possibleIssuesBasedOnMileage && result.possibleIssuesBasedOnMileage.length > 0 ? `
+            <div class="result-section">
+              <h3>Possible Issues Based on Mileage</h3>
+              <ul>
+                ${result.possibleIssuesBasedOnMileage.map(item => `<li>${item}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        `;
+        resultsDiv.innerHTML = html;
+      } catch (error) {
+        resultsDiv.innerHTML = `<div class="error">${error.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>
