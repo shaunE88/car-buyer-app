@@ -35,7 +35,7 @@ export async function generateCarResearch(make, model, year, mileage) {
 5. Safety ratings and features
 6. Resale value outlook
 7. Average market price for this year/mileage
-8. Key features to look for in condition
+8. Key features and issues to look for when inspecting condition
 
 Format as JSON with these exact keys: commonIssues, reliability, maintenanceCosts, fuelEconomy, safetyRating, resaleValue, averagePrice, keyFeatures`;
 
@@ -57,7 +57,7 @@ Format as JSON with these exact keys: commonIssues, reliability, maintenanceCost
 }
 
 export async function generateTestDriveGuide(make, model, year) {
-  const prompt = `You are a certified mechanic and car buying expert. Generate a detailed test drive inspection guide for a ${year} ${make} ${model}. Include specific things to check for this model that are known to have issues. Provide as JSON with these keys:
+  const prompt = `You are a certified mechanic and car buying expert. Generate a detailed test drive inspection guide specifically for a ${year} ${make} ${model}. Include specific things to check for this model that are known to have issues. Avoid providing generic test drive advice that is not model specific. Provide as JSON with these keys:
 - preTestDriveChecks: array of steps
 - exteriorInspection: array of items
 - interiorInspection: array of items
