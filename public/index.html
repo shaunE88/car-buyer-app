@@ -386,6 +386,39 @@
       </footer>
 
   <script>
+    // --- Form State Persistence ---
+    const formFields = [
+      // Research tab
+      'make', 'model', 'year', 'mileage', 'searchMethod', 'vin', 'vinMileage',
+      // Test Drive tab
+      'tdMake', 'tdModel', 'tdYear',
+      // Negotiation tab
+      'negMake', 'negModel', 'negYear', 'negMileage', 'sellingPrice'
+    ];
+
+    // Save field values to localStorage on input
+    formFields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', () => {
+          localStorage.setItem('carbuyer_' + id, el.value);
+        });
+      }
+    });
+
+    // Restore field values from localStorage
+    function restoreFormFields() {
+      formFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && localStorage.getItem('carbuyer_' + id) !== null) {
+          el.value = localStorage.getItem('carbuyer_' + id);
+        }
+      });
+    }
+
+    // Restore on page load
+    window.addEventListener('DOMContentLoaded', restoreFormFields);
+    // Restore on tab switch
     function switchTab(tabName, evt) {
       // Hide all tabs
       document.querySelectorAll('.tab-content').forEach(tab => {
@@ -409,6 +442,8 @@
           }
         });
       }
+
+      restoreFormFields();
     }
 
     function toggleSearchMethod() {

@@ -1,4 +1,6 @@
+
 import OpenAI from 'openai';
+import JSON5 from 'json5';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -7,21 +9,23 @@ const openai = new OpenAI({
 function extractAndParseJSON(content) {
   // Strip markdown code block if present
   let jsonStr = content.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-  
   try {
     return JSON.parse(jsonStr);
   } catch (e) {
-    // Try to fix common issues: unescaped quotes in strings
-    // This regex looks for quotes that appear inside quoted strings and escapes them
-    jsonStr = jsonStr.replace(/": "([^"]*)"([^"]*)",/g, '": "$1\\"$2",');
-    jsonStr = jsonStr.replace(/": "([^"]*)"$/g, '": "$1\\"');
-    
     try {
-      return JSON.parse(jsonStr);
+      // Try JSON5 for more flexible parsing
+      return JSON5.parse(jsonStr);
     } catch (e2) {
-      console.error('Failed to parse JSON:', e2.message);
-      console.error('Attempted JSON:', jsonStr.substring(0, 500));
-      throw new Error(`Invalid JSON response: ${e.message}`);
+      // Try to fix common issues: unescaped quotes in strings
+      jsonStr = jsonStr.replace(/": "([^"]*)"([^"]*)",/g, '": "$1\\"$2",');
+      jsonStr = jsonStr.replace(/": "([^"]*)"$/g, '": "$1\\"');
+      try {
+        return JSON5.parse(jsonStr);
+      } catch (e3) {
+        console.error('Failed to parse JSON:', e3.message);
+        console.error('Attempted JSON:', jsonStr.substring(0, 500));
+        throw new Error(`Invalid JSON response: ${e3.message}`);
+      }
     }
   }
 }
