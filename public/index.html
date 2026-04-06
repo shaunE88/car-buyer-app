@@ -386,7 +386,7 @@
       </footer>
 
   <script>
-    function switchTab(tabName) {
+    function switchTab(tabName, evt) {
       // Hide all tabs
       document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -397,7 +397,18 @@
 
       // Show selected tab
       document.getElementById(tabName).classList.add('active');
-      event.target.classList.add('active');
+      // Only add active to the button if called from a click event
+      if (evt && evt.target) {
+        evt.target.classList.add('active');
+      } else {
+        // fallback: activate the correct button by tabName
+        const btns = document.querySelectorAll('.tab-btn');
+        btns.forEach(btn => {
+          if (btn.textContent.replace(/\s/g, '').toLowerCase().includes(tabName.replace(/\s/g, '').toLowerCase())) {
+            btn.classList.add('active');
+          }
+        });
+      }
     }
 
     function toggleSearchMethod() {
