@@ -9,19 +9,34 @@ const openai = new OpenAI({
 function extractAndParseJSON(content) {
   // Strip markdown code block if present
   let jsonStr = content.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  
+  // Try standard JSON first
   try {
     return JSON.parse(jsonStr);
   } catch (e) {
+    // Try JSON5 for more flexible parsing
     try {
-      // Try JSON5 for more flexible parsing
       return JSON5.parse(jsonStr);
     } catch (e2) {
-      // Try to fix common issues: unescaped quotes in strings
+      // Try common fixes
       jsonStr = jsonStr.replace(/": "([^"]*)"([^"]*)",/g, '": "$1\\"$2",');
       jsonStr = jsonStr.replace(/": "([^"]*)"$/g, '": "$1\\"');
+      
       try {
         return JSON5.parse(jsonStr);
       } catch (e3) {
+        // Last resort: try to extract a valid JSON object by finding matching braces
+        try {
+          const start = jsonStr.indexOf('{');
+          const end = jsonStr.lastIndexOf('}');
+          if (start !== -1 && end !== -1 && end > start) {
+            const extracted = jsonStr.substring(start, end + 1);
+            return JSON5.parse(extracted);
+          }
+        } catch (e4) {
+          // All parsing attempts failed
+        }
+        
         console.error('Failed to parse JSON:', e3.message);
         console.error('Attempted JSON:', jsonStr.substring(0, 500));
         throw new Error(`Invalid JSON response: ${e3.message}`);
