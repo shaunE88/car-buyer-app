@@ -386,19 +386,30 @@
       </footer>
 
   <script>
-    // --- Form State Persistence ---
-    const formFields = [
-      // Research tab
+    // --- Form State Persistence with Shared Fields ---
+    
+    // Map of field relationships: when one changes, sync to others
+    const sharedFieldMaps = {
+      'make': ['tdMake', 'negMake'],
+      'tdMake': ['make', 'negMake'],
+      'negMake': ['make', 'tdMake'],
+      'model': ['tdModel', 'negModel'],
+      'tdModel': ['model', 'negModel'],
+      'negModel': ['model', 'tdModel'],
+      'year': ['tdYear', 'negYear'],
+      'tdYear': ['year', 'negYear'],
+      'negYear': ['year', 'tdYear']
+    };
+
+    const allFormFields = [
       'make', 'model', 'year', 'mileage', 'searchMethod', 'vin', 'vinMileage',
-      // Test Drive tab
       'tdMake', 'tdModel', 'tdYear',
-      // Negotiation tab
       'negMake', 'negModel', 'negYear', 'negMileage', 'sellingPrice'
     ];
 
-    // Setup form field persistence
+    // Setup form field persistence with cross-tab syncing
     function setupFormPersistence() {
-      formFields.forEach(id => {
+      allFormFields.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
           // Restore on load
@@ -406,9 +417,22 @@
           if (saved) {
             el.value = saved;
           }
-          // Save on input
+          
+          // Sync changes across related fields
           el.addEventListener('change', () => {
-            localStorage.setItem('carbuyer_' + id, el.value);
+            const value = el.value;
+            localStorage.setItem('carbuyer_' + id, value);
+            
+            // Sync to related fields if they exist
+            if (sharedFieldMaps[id]) {
+              sharedFieldMaps[id].forEach(relatedId => {
+                const relatedEl = document.getElementById(relatedId);
+                if (relatedEl) {
+                  relatedEl.value = value;
+                  localStorage.setItem('carbuyer_' + relatedId, value);
+                }
+              });
+            }
           });
         }
       });
@@ -416,7 +440,7 @@
 
     // Restore field values from localStorage
     function restoreFormFields() {
-      formFields.forEach(id => {
+      allFormFields.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
           const saved = localStorage.getItem('carbuyer_' + id);
