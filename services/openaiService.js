@@ -18,14 +18,22 @@ function extractAndParseJSON(content) {
     try {
       return JSON5.parse(jsonStr);
     } catch (e2) {
-      // Try common fixes
-      jsonStr = jsonStr.replace(/": "([^"]*)"([^"]*)",/g, '": "$1\\"$2",');
-      jsonStr = jsonStr.replace(/": "([^"]*)"$/g, '": "$1\\"');
+      // Attempt repairs
+      let repaired = jsonStr;
+      
+      // Remove trailing commas before } or ]
+      repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+      
+      // Fix single quotes to double quotes (be careful not to break apostrophes in text)
+      repaired = repaired.replace(/: '([^']*)'/g, ': "$1"');
+      
+      // Remove unescaped quotes inside string values
+      repaired = repaired.replace(/": "([^"]*)"([^"]*)",/g, '": "$1\\"$2",');
       
       try {
-        return JSON5.parse(jsonStr);
+        return JSON5.parse(repaired);
       } catch (e3) {
-        // Last resort: try to extract a valid JSON object by finding matching braces
+        // Try extracting JSON object by braces
         try {
           const start = jsonStr.indexOf('{');
           const end = jsonStr.lastIndexOf('}');
@@ -38,7 +46,7 @@ function extractAndParseJSON(content) {
         }
         
         console.error('Failed to parse JSON:', e3.message);
-        console.error('Attempted JSON:', jsonStr.substring(0, 500));
+        console.error('Original response:', content.substring(0, 1000));
         throw new Error(`Invalid JSON response: ${e3.message}`);
       }
     }

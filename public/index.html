@@ -396,29 +396,39 @@
       'negMake', 'negModel', 'negYear', 'negMileage', 'sellingPrice'
     ];
 
-    // Save field values to localStorage on input
-    formFields.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('input', () => {
-          localStorage.setItem('carbuyer_' + id, el.value);
-        });
-      }
-    });
+    // Setup form field persistence
+    function setupFormPersistence() {
+      formFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          // Restore on load
+          const saved = localStorage.getItem('carbuyer_' + id);
+          if (saved) {
+            el.value = saved;
+          }
+          // Save on input
+          el.addEventListener('change', () => {
+            localStorage.setItem('carbuyer_' + id, el.value);
+          });
+        }
+      });
+    }
 
     // Restore field values from localStorage
     function restoreFormFields() {
       formFields.forEach(id => {
         const el = document.getElementById(id);
-        if (el && localStorage.getItem('carbuyer_' + id) !== null) {
-          el.value = localStorage.getItem('carbuyer_' + id);
+        if (el) {
+          const saved = localStorage.getItem('carbuyer_' + id);
+          if (saved) {
+            el.value = saved;
+          }
         }
       });
     }
 
-    // Restore on page load
-    window.addEventListener('DOMContentLoaded', restoreFormFields);
-    // Restore on tab switch
+    // Setup persistence after page load
+    window.addEventListener('DOMContentLoaded', setupFormPersistence);
     function switchTab(tabName, evt) {
       // Hide all tabs
       document.querySelectorAll('.tab-content').forEach(tab => {
