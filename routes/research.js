@@ -1,7 +1,6 @@
 import express from 'express';
 import { generateCarResearch, generateQuestionsForSeller } from '../services/openaiService.js';
 import { decodeVin } from '../utils/vinDecoder.js';
-import { carDatabase } from '../data/carDatabase.js';
 
 const router = express.Router();
 
@@ -16,14 +15,8 @@ router.post('/by-details', async (req, res) => {
       });
     }
 
-    // Try to get from database first, then fallback to AI
-    const carKey = `${make.toUpperCase()}-${model.toUpperCase()}-${year}`;
-    let carData = carDatabase[carKey];
-
-    if (!carData) {
-      // Use AI to generate research
-      carData = await generateCarResearch(make, model, year, mileage);
-    }
+    // Use AI to generate research
+    const carData = await generateCarResearch(make, model, year, mileage);
 
     const research = {
       vehicle: { make, model, year, mileage },
