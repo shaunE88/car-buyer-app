@@ -1,13 +1,14 @@
 import express from 'express';
 import { generateCarResearch, generateQuestionsForSeller } from '../services/openaiService.js';
 import { decodeVin } from '../utils/vinDecoder.js';
+import { searchLocalInventory } from '../utils/inventorySearch.js';
 
 const router = express.Router();
 
 // Research cars by make, model, year
 router.post('/by-details', async (req, res) => {
   try {
-    const { make, model, year, mileage } = req.body;
+    const { make, model, year, mileage, zipCode } = req.body;
 
     if (!make || !model || !year || mileage === undefined) {
       return res.status(400).json({
@@ -18,9 +19,16 @@ router.post('/by-details', async (req, res) => {
     // Use AI to generate research
     const carData = await generateCarResearch(make, model, year, mileage);
 
+    // Search for local inventory if zip code provided
+    let localInventory = null;
+    if (zipCode && zipCode.length === 5) {
+      localInventory = await searchLocalInventory(make, model, year, zipCode);
+    }
+
     const research = {
       vehicle: { make, model, year, mileage },
-      ...carData
+      ...carData,
+      ...(localInventory && { localInventory })
     };
 
     res.json(research);

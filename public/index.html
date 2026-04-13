@@ -440,6 +440,10 @@
               <input type="number" id="mileage" placeholder="e.g., 45000" min="0">
             </div>
           </div>
+          <div class="form-group">
+            <label for="zipCode">📍 Zip Code (Optional - to find local inventory)</label>
+            <input type="text" id="zipCode" placeholder="e.g., 90210" maxlength="5" pattern="[0-9]{5}">
+          </div>
         </div>
 
         <div id="vinSearch" style="display:none;">
@@ -629,7 +633,7 @@
     };
 
     const allFormFields = [
-      'make', 'model', 'year', 'mileage', 'searchMethod', 'vin', 'vinMileage',
+      'make', 'model', 'year', 'mileage', 'zipCode', 'searchMethod', 'vin', 'vinMileage',
       'tdMake', 'tdModel', 'tdYear',
       'negMake', 'negModel', 'negYear', 'negMileage', 'sellingPrice'
     ];
@@ -753,12 +757,13 @@
           const model = document.getElementById('model').value;
           const year = document.getElementById('year').value;
           const mileage = document.getElementById('mileage').value;
+          const zipCode = document.getElementById('zipCode').value;
 
           if (!make || !model || !year || !mileage) {
             throw new Error('Please fill in all fields');
           }
 
-          data = { make, model, year: parseInt(year), mileage: parseInt(mileage) };
+          data = { make, model, year: parseInt(year), mileage: parseInt(mileage), zipCode: zipCode || null };
           endpoint = '/api/research/by-details';
         } else {
           const vin = document.getElementById('vin').value;
@@ -917,6 +922,23 @@
             <ul>
               ${result.keyFeatures.map(feature => `<li>${formatValue(feature)}</li>`).join('')}
             </ul>
+          </div>
+        `;
+      }
+
+      if (result.localInventory && result.localInventory.length > 0) {
+        html += `
+          <div class="result-section">
+            <h3>📍 Local Inventory Near You</h3>
+            <p style="margin-bottom: 15px; color: #666; font-size: 0.95em;">Found ${result.localInventory.length} similar vehicles for sale:</p>
+            ${result.localInventory.map(car => `
+              <div class="result-item">
+                <strong>${car.year} ${car.make} ${car.model}</strong>
+                <p>Price: ${formatCurrency(car.price)} | Mileage: ${car.mileage.toLocaleString()} miles</p>
+                ${car.dealer ? `<p>Dealer: ${car.dealer}</p>` : ''}
+                ${car.url ? `<p><a href="${car.url}" target="_blank" style="color: #FF6B21; text-decoration: none;">View Listing →</a></p>` : ''}
+              </div>
+            `).join('')}
           </div>
         `;
       }
