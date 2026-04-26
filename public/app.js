@@ -1,6 +1,7 @@
 import { initializeMakeDropdowns, setupFormPersistence, restoreFormFields, updateModelDropdown } from './formUtils.js';
 import { researchCar, getTestDriveGuide, getNegotiationStrategy } from './api.js';
 
+// copywrite 2026 Shaun Elkin - All rights reserved
 // Expose functions to global scope for HTML onclick handlers
 window.switchTab = switchTab;
 window.toggleSearchMethod = toggleSearchMethod;
