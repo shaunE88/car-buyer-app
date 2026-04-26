@@ -1,5 +1,20 @@
 import { formatObjectAsText, formatCurrency } from './formatters.js';
 
+/**
+ * Safely escape HTML to prevent XSS attacks
+ */
+function escapeHtml(text) {
+  if (!text || typeof text !== 'string') return '';
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, char => map[char]);
+}
+
 export async function researchCar() {
   const method = document.getElementById('searchMethod').value;
   const resultsDiv = document.getElementById('researchResults');
@@ -41,15 +56,34 @@ export async function researchCar() {
       body: JSON.stringify(data)
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Research failed');
+    // Handle non-JSON responses (like HTML error pages)
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server returned an invalid response. Please try again.');
     }
 
-    const result = await response.json();
+    // Parse response safely
+    let result;
+    try {
+      result = await response.json();
+    } catch (parseError) {
+      console.error('Failed to parse response:', parseError);
+      throw new Error('Unable to process server response. Please try again.');
+    }
+
+    // Check for error in response body
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Research failed');
+    }
+
     displayResearchResults(result, resultsDiv);
   } catch (error) {
-    resultsDiv.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+    console.error('Research error:', error);
+    resultsDiv.innerHTML = `<div class="error">⚠️ ${error.message || 'An unexpected error occurred. Please try again.'}</div>`;
   }
 }
 
@@ -161,50 +195,67 @@ export async function getTestDriveGuide() {
   try {
     resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>📋 Generating test drive guide...</div>';
 
-    const response = await fetch(`/api/test-drive/checklist?make=${make}&model=${model}&year=${year}`);
-    if (!response.ok) throw new Error('Failed to get guide');
+    const response = await fetch(`/api/test-drive/checklist?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}&year=${year}`);
+    
+    // Handle non-JSON responses
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server returned an invalid response. Please try again.');
+    }
 
-    const result = await response.json();
+    // Parse response safely
+    let result;
+    try {
+      result = await response.json();
+    } catch (parseError) {
+      console.error('Failed to parse response:', parseError);
+      throw new Error('Unable to process server response. Please try again.');
+    }
+
+    if (!response.ok || result.error) {
+      throw new Error(result.error || 'Failed to get guide');
+    }
+
     let html = `
       <div class="result-section">
         <h3>🔧 Pre-Test Drive Checks</h3>
         <ul>
-          ${(result.preTestDriveChecks || []).map(item => `<li>${item}</li>`).join('')}
+          ${(result.preTestDriveChecks || []).map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
         </ul>
       </div>
 
       <div class="result-section">
         <h3>🚗 Exterior Inspection</h3>
         <ul>
-          ${(result.exteriorInspection || []).map(item => `<li>${item}</li>`).join('')}
+          ${(result.exteriorInspection || []).map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
         </ul>
       </div>
 
       <div class="result-section">
         <h3>🪑 Interior Inspection</h3>
         <ul>
-          ${(result.interiorInspection || []).map(item => `<li>${item}</li>`).join('')}
+          ${(result.interiorInspection || []).map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
         </ul>
       </div>
 
       <div class="result-section">
         <h3>⚙️ Engine Compartment</h3>
         <ul>
-          ${(result.engineCompartment || []).map(item => `<li>${item}</li>`).join('')}
+          ${(result.engineCompartment || []).map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
         </ul>
       </div>
 
       <div class="result-section">
         <h3>🏎️ Test Drive Points</h3>
         <ul>
-          ${(result.testDrivePoints || []).map(item => `<li>${item}</li>`).join('')}
+          ${(result.testDrivePoints || []).map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
         </ul>
       </div>
 
       <div class="result-section">
         <h3>🚩 Red Flags</h3>
         <ul>
-          ${(result.redFlags || []).map(item => `<li>${item}</li>`).join('')}
+          ${(result.redFlags || []).map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
         </ul>
       </div>
 
@@ -212,14 +263,15 @@ export async function getTestDriveGuide() {
         <div class="result-section">
           <h3>🎯 Model-Specific Concerns</h3>
           <ul>
-            ${result.modelSpecificConcerns.map(item => `<li>${item}</li>`).join('')}
+            ${result.modelSpecificConcerns.map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
           </ul>
         </div>
       ` : ''}
     `;
     resultsDiv.innerHTML = html;
   } catch (error) {
-    resultsDiv.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+    console.error('Test drive error:', error);
+    resultsDiv.innerHTML = `<div class="error">⚠️ ${error.message || 'An unexpected error occurred. Please try again.'}</div>`;
   }
 }
 
@@ -247,43 +299,59 @@ export async function getNegotiationStrategy() {
       })
     });
 
-    if (!response.ok) throw new Error('Failed to get strategy');
+    // Handle non-JSON responses
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server returned an invalid response. Please try again.');
+    }
 
-    const result = await response.json();
+    // Parse response safely
+    let result;
+    try {
+      result = await response.json();
+    } catch (parseError) {
+      console.error('Failed to parse response:', parseError);
+      throw new Error('Unable to process server response. Please try again.');
+    }
+
+    if (!response.ok || result.error) {
+      throw new Error(result.error || 'Failed to get strategy');
+    }
+
     let html = `
       <div class="result-section">
         <h3>📊 Market Analysis</h3>
-        <p>${result.marketAnalysis}</p>
+        <p>${escapeHtml(String(result.marketAnalysis || 'No analysis available'))}</p>
       </div>
 
       <div class="result-section">
         <h3>💰 Fair Price Range</h3>
-        <p>${result.fairPriceRange}</p>
+        <p>${escapeHtml(String(result.fairPriceRange || 'Unable to determine'))}</p>
       </div>
 
       <div class="result-section">
         <h3>💵 Recommended Offer</h3>
         <div class="result-item">
           <strong>Suggested Opening Offer:</strong>
-          <p>$${result.suggestedOpeningOffer?.toLocaleString() || 'N/A'}</p>
+          <p>$${(result.suggestedOpeningOffer || 0).toLocaleString()}</p>
         </div>
         <div class="result-item">
           <strong>Walk Away Price:</strong>
-          <p>$${result.walkawayprice?.toLocaleString() || 'N/A'}</p>
+          <p>$${(result.walkawayprice || 0).toLocaleString()}</p>
         </div>
       </div>
 
       <div class="result-section">
         <h3>📝 Negotiation Points</h3>
         <ul>
-          ${(result.negotiationPoints || []).map(item => `<li>${item}</li>`).join('')}
+          ${(result.negotiationPoints || []).map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
         </ul>
       </div>
 
       <div class="result-section">
         <h3>💬 Negotiation Tips</h3>
         <ul>
-          ${(result.negotiationTips || []).map(item => `<li>${item}</li>`).join('')}
+          ${(result.negotiationTips || []).map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
         </ul>
       </div>
 
@@ -291,14 +359,15 @@ export async function getNegotiationStrategy() {
         <div class="result-section">
           <h3>⚠️ Possible Issues Based on Mileage</h3>
           <ul>
-            ${result.possibleIssuesBasedOnMileage.map(item => `<li>${item}</li>`).join('')}
+            ${result.possibleIssuesBasedOnMileage.map(item => `<li>${escapeHtml(String(item))}</li>`).join('')}
           </ul>
         </div>
       ` : ''}
     `;
     resultsDiv.innerHTML = html;
   } catch (error) {
-    resultsDiv.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+    console.error('Negotiation error:', error);
+    resultsDiv.innerHTML = `<div class="error">⚠️ ${error.message || 'An unexpected error occurred. Please try again.'}</div>`;
   }
 }
 

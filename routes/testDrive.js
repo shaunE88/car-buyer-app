@@ -14,10 +14,21 @@ router.get('/checklist', async (req, res) => {
       });
     }
 
+    // Will never throw, returns safe defaults on error
     const guide = await generateTestDriveGuide(make, model, year);
     res.json(guide);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Test drive guide error:', error.message);
+    // Return safe default structure
+    res.status(200).json({
+      preTestDriveChecks: ['Check tire pressure and condition', 'Verify fluid levels'],
+      exteriorInspection: ['Look for dents, rust, and paint issues'],
+      interiorInspection: ['Check upholstery condition', 'Test all controls'],
+      engineCompartment: ['Look for leaks', 'Check fluid levels'],
+      testDrivePoints: ['Test acceleration', 'Check braking'],
+      redFlags: ['Smoke or unusual odors', 'Warning lights'],
+      modelSpecificConcerns: ['Recommend professional inspection']
+    });
   }
 });
 
@@ -32,13 +43,22 @@ router.post('/questions-for-seller', async (req, res) => {
       });
     }
 
+    // Will never throw, returns safe defaults on error
     const questions = await generateQuestionsForSeller(make, model, year);
     res.json({
       vehicle: { make, model, year },
       ...questions
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Seller questions error:', error.message);
+    // Return safe default structure
+    res.status(200).json({
+      vehicle: { make, model, year },
+      history: [],
+      maintenance: [],
+      condition: [],
+      pricing: []
+    });
   }
 });
 

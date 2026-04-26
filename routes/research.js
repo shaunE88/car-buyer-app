@@ -16,13 +16,18 @@ router.post('/by-details', async (req, res) => {
       });
     }
 
-    // Use AI to generate research
+    // Use AI to generate research - will never throw, returns safe defaults on error
     const carData = await generateCarResearch(make, model, year, mileage);
 
     // Search for local inventory if zip code provided
     let localInventory = null;
     if (zipCode && zipCode.length === 5) {
-      localInventory = await searchLocalInventory(make, model, year, zipCode);
+      try {
+        localInventory = await searchLocalInventory(make, model, year, zipCode);
+      } catch (error) {
+        console.warn('Local inventory search failed:', error.message);
+        // Continue without inventory
+      }
     }
 
     const research = {
@@ -33,7 +38,19 @@ router.post('/by-details', async (req, res) => {
 
     res.json(research);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Research error:', error.message);
+    // Return a safe response structure instead of error
+    res.status(200).json({
+      vehicle: { make: '', model: '', year: 0, mileage: 0 },
+      commonIssues: ['Unable to retrieve research data at this time. Please try again later.'],
+      reliability: 'Unable to retrieve data',
+      maintenanceCosts: 'Unable to retrieve data',
+      fuelEconomy: 'Unable to retrieve data',
+      safetyRating: 'Unable to retrieve data',
+      resaleValue: 'Unable to retrieve data',
+      averagePrice: 'Unable to retrieve data',
+      keyFeatures: ['Please try your search again']
+    });
   }
 });
 
