@@ -15,12 +15,25 @@ function escapeHtml(text) {
   return text.replace(/[&<>"']/g, char => map[char]);
 }
 
+/**
+ * Scroll element into view smoothly
+ */
+function scrollToResults(elementId) {
+  setTimeout(() => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
+}
+
 export async function researchCar() {
   const method = document.getElementById('searchMethod').value;
   const resultsDiv = document.getElementById('researchResults');
 
   try {
     resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>🔍 Researching car...</div>';
+    scrollToResults('researchResults');
 
     let data = {};
     let endpoint = '';
@@ -84,6 +97,7 @@ export async function researchCar() {
   } catch (error) {
     console.error('Research error:', error);
     resultsDiv.innerHTML = `<div class="error">⚠️ ${error.message || 'An unexpected error occurred. Please try again.'}</div>`;
+    scrollToResults('researchResults');
   }
 }
 
@@ -194,6 +208,7 @@ export async function getTestDriveGuide() {
 
   try {
     resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>📋 Generating test drive guide...</div>';
+    scrollToResults('testDriveResults');
 
     const response = await fetch(`/api/test-drive/checklist?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}&year=${year}`);
     
@@ -269,9 +284,11 @@ export async function getTestDriveGuide() {
       ` : ''}
     `;
     resultsDiv.innerHTML = html;
+    scrollToResults('testDriveResults');
   } catch (error) {
     console.error('Test drive error:', error);
     resultsDiv.innerHTML = `<div class="error">⚠️ ${error.message || 'An unexpected error occurred. Please try again.'}</div>`;
+    scrollToResults('testDriveResults');
   }
 }
 
@@ -290,6 +307,7 @@ export async function getNegotiationStrategy() {
 
   try {
     resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>💰 Analyzing pricing strategy...</div>';
+    scrollToResults('negotiationResults');
 
     const response = await fetch('/api/negotiation/strategy', {
       method: 'POST',
@@ -365,9 +383,11 @@ export async function getNegotiationStrategy() {
       ` : ''}
     `;
     resultsDiv.innerHTML = html;
+    scrollToResults('negotiationResults');
   } catch (error) {
     console.error('Negotiation error:', error);
     resultsDiv.innerHTML = `<div class="error">⚠️ ${error.message || 'An unexpected error occurred. Please try again.'}</div>`;
+    scrollToResults('negotiationResults');
   }
 }
 
